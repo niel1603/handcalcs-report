@@ -1,7 +1,3 @@
-Here’s a **shorter, friendlier, more down-to-earth** version. It avoids sounding grand and makes it clear this is just a practical fork.
-
----
-
 # handcalcs-report
 
 A small, report-focused fork of [handcalcs](https://github.com/connorferster/handcalcs).
@@ -232,11 +228,3 @@ This project just adds a bit of structure on top.
 ## License
 
 Same license as `handcalcs` (see the original project).
-
----
-
-If you want, I can also:
-
-* make it even shorter (README-minimal)
-* tune the tone to be more “internal tool”
-* rewrite it as if it were a quick GitHub fork notice
