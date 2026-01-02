@@ -32,35 +32,68 @@ We didn’t reinvent anything — just built on top of an already solid project.
 
 ## Example
 
-Instead of spreading calculations across many cells:
+Instead of spreading calculations across many cells with separate markdown, you can write structured cell like this:
 
 ```python
-%%render
-beam_length = 5.0
+# import unit
+import forallpeople as fp
+fp.environment("structural")
+
+m   = fp.m
+mm  = fp.mm
+kN  = fp.kN
+MPa = fp.MPa
+GPa = fp.GPa
 ```
 
 ```python
-%%render
-w = 10.0
-```
+%%render input
+# define input
 
-You can write one structured cell:
+## Load and Resistance Factor Design, LRFD
+phi = 0.75
+
+## The angle between the line of action of the required force and the weld longitudinal axis
+theta = 0.0
+
+## Fillet weld leg size
+# wrapped in parentheses () to skip substitution
+Ls = (8.0 * mm) 
+
+## Effective weld length
+L = (75.0 * mm) # Comment work like the original
+
+## Filler metal classification strength, E60 → 410 MPa, E70 → 490 MPa
+F_EXX = (490 * MPa)
+
+## Number of weld side
+N_side = 2
+```
 
 ```python
 %%render report
-## 1. Input
+# define calculation report
 
-## 1.1. Beam Properties
-beam_length = 5.0
+## 1. Calculate weld
+## 1.1 Calculate weld shear capacity
 
-## 1.2. Loading
-w = 10.0
+## Total length of fillet weld
+L_total = L * N_side 
 
-## 2. Calculation
+## Effective throat thickness
+Th = 0.707 * Ls 
 
-## 2.1 Bending Moment
-The maximum moment occurs at midspan.
-M = w * beam_length**2 / 8
+## Effective shear area
+A_we = Th * L_total
+
+## Design shear stress of weld metal
+F_nw = 0.6 * F_EXX 
+
+## Directional strength increase transverse shear
+k_ds = (1.0 + 0.5 * (sin(radians(theta)))**1.5)  
+
+## Weld shear capacity
+phi_R_n = phi * F_nw * A_we * k_ds
 ```
 
 The output is a clean, readable calculation report with headings, text, and aligned equations.

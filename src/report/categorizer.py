@@ -81,13 +81,10 @@ def categorize_line(
     except ValueError:
         comment = ""
 
-    # print (cell_override)
     # Report cell override behavior
     if cell_override == "input":
-        # print('INPUT')
         return _categorize_input_line(line, calculated_results, comment)
     if cell_override == "report":
-        # print('REPORT')
         return _categorize_report_line(line, calculated_results, comment)
     
     # Standard behavior (for future extension)
