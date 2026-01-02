@@ -47,7 +47,8 @@ def parse_line_args(line: str) -> dict:
     Returns a dict that represents the validated arguments
     passed in as a line on the %%render or %%tex cell magics.
     """
-    valid_args = ["params", "long", "short", "sympy", "symbolic", "_testing"]
+    # Add report as valid args
+    valid_args = ["params", "long", "report", "short", "sympy", "symbolic", "_testing"]
     # valid_args = ["params", "long", "short", "sympy", "symbolic", "_testing"]
     sympy_arg = ["sympy"]
     line_parts = line.split()
@@ -101,16 +102,21 @@ def render(line, cell):
     # Retrieve updated variables (after .run_cell(cell))
     user_ns_postrun = ip.user_ns
 
-    # Do the handcalc conversion
-    renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
-    latex_code = renderer.render()
-
-    # Display, but not as an "output"
-    display(Latex(latex_code))
+    # 🔽 SAFE branching (selection only)
+    if line_args.get("override") == "report":
+        from report.renderer import ReportRenderer
+        renderer = ReportRenderer(cell, user_ns_postrun, line_args)
+        markdown = renderer.render()
+        display(Markdown(markdown))
+        output = markdown
+    else:
+        renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
+        latex_code = renderer.render()
+        display(Latex(latex_code))
+        output = latex_code
 
     if line_args["override"] == "_testing":
-        return latex_code
-
+        return output
 
 @register_cell_magic
 def tex(line, cell):
@@ -131,15 +137,80 @@ def tex(line, cell):
     # Retrieve updated variables (after .run_cell(cell))
     user_ns_postrun = ip.user_ns
 
-    # Do the handcalc conversion
-    renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
-    latex_code = renderer.render()
-
-    # Display, but not as an "output"
-    print(latex_code)
+    if line_args.get("override") == "report":
+        from report.report import ReportRenderer
+        renderer = ReportRenderer(cell, user_ns_postrun, line_args)
+        markdown = renderer.render()
+        print(markdown)
+        output = markdown
+    else:
+        renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
+        latex_code = renderer.render()
+        print(latex_code)
+        output = latex_code
 
     if line_args["override"] == "_testing":
-        return latex_code
+        return output
+
+
+# @register_cell_magic
+# def render(line, cell):
+#     # Retrieve var dict from user namespace
+#     user_ns_prerun = ip.user_ns
+#     line_args = parse_line_args(line)
+
+#     if line_args["sympy"]:
+#         cell = s_kit.convert_sympy_cell_to_py_cell(cell, user_ns_prerun)
+
+#     # Run the cell
+#     with cell_capture:
+#         exec_result = ip.run_cell(cell)
+
+#     if not exec_result.success:
+#         return None
+
+#     # Retrieve updated variables (after .run_cell(cell))
+#     user_ns_postrun = ip.user_ns
+
+#     # Do the handcalc conversion
+#     renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
+#     latex_code = renderer.render()
+
+#     # Display, but not as an "output"
+#     display(Latex(latex_code))
+
+#     if line_args["override"] == "_testing":
+#         return latex_code
+
+
+# @register_cell_magic
+# def tex(line, cell):
+#     # Retrieve var dict from user namespace
+#     user_ns_prerun = ip.user_ns
+#     line_args = parse_line_args(line)
+
+#     if line_args["sympy"]:
+#         cell = s_kit.convert_sympy_cell_to_py_cell(cell, user_ns_prerun)
+
+#     # Run the cell
+#     with cell_capture:
+#         exec_result = ip.run_cell(cell)
+
+#     if not exec_result.success:
+#         return None
+
+#     # Retrieve updated variables (after .run_cell(cell))
+#     user_ns_postrun = ip.user_ns
+
+#     # Do the handcalc conversion
+#     renderer = hand.LatexRenderer(cell, user_ns_postrun, line_args)
+#     latex_code = renderer.render()
+
+#     # Display, but not as an "output"
+#     print(latex_code)
+
+#     if line_args["override"] == "_testing":
+#         return latex_code
 
 
 def load_ipython_extension(ipython):

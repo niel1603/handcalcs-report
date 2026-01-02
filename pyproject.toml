@@ -3,36 +3,34 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
-name = "handcalcs"
-authors = [{name = "Connor Ferster", email = "connorferster@gmail.com"}]
+name = "handcalcs-report"
+authors = [{ name = "Daniel" }]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 classifiers = ["License :: OSI Approved :: Apache Software License"]
-dynamic = ["version", "description"]
+description = "A report-oriented fork of handcalcs for structured calculation notebooks"
+dynamic = ["version"]
+requires-python = ">=3.9"
 dependencies = [
     "more_itertools",
     "innerscope >= 0.7.0",
-    "pyparsing"
+    "pyparsing",
 ]
 
 [project.urls]
-Source = "https://github.com/connorferster/handcalcs"
-
+Source = "https://github.com/niel1603/handcalcs-report"
+Upstream = "https://github.com/connorferster/handcalcs"
 
 [project.optional-dependencies]
-exporters = [
-    "nb-hideinputs",
-]
-
-
+exporters = ["nb-hideinputs"]
 doc = ["sphinx"]
 
 [tool.coverage.paths]
-source = ['handcalcs', '*/site-packages']
+source = ["handcalcs_report", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ['handcalcs']
+source = ["handcalcs_report"]
 
 [tool.coverage.report]
 show_missing = true
