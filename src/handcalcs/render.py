@@ -41,6 +41,7 @@ except AttributeError:
         " Use 'from handcalcs import handcalc' for the decorator interface."
     )
 
+from report.renderer import ReportRenderer
 
 def parse_line_args(line: str) -> dict:
     """
@@ -48,7 +49,7 @@ def parse_line_args(line: str) -> dict:
     passed in as a line on the %%render or %%tex cell magics.
     """
     # Add report as valid args
-    valid_args = ["params", "long", "report", "short", "sympy", "symbolic", "_testing"]
+    valid_args = ["params", "input", "long", "report", "short", "sympy", "symbolic", "_testing"]
     # valid_args = ["params", "long", "short", "sympy", "symbolic", "_testing"]
     sympy_arg = ["sympy"]
     line_parts = line.split()
@@ -103,8 +104,7 @@ def render(line, cell):
     user_ns_postrun = ip.user_ns
 
     # 🔽 SAFE branching (selection only)
-    if line_args.get("override") == "report":
-        from report.renderer import ReportRenderer
+    if line_args.get("override") == "input" or "report":
         renderer = ReportRenderer(cell, user_ns_postrun, line_args)
         markdown = renderer.render()
         display(Markdown(markdown))
@@ -137,8 +137,7 @@ def tex(line, cell):
     # Retrieve updated variables (after .run_cell(cell))
     user_ns_postrun = ip.user_ns
 
-    if line_args.get("override") == "report":
-        from report.report import ReportRenderer
+    if line_args.get("override") == "input" or "report":
         renderer = ReportRenderer(cell, user_ns_postrun, line_args)
         markdown = renderer.render()
         print(markdown)

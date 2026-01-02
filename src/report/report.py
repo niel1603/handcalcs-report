@@ -193,8 +193,6 @@ def format_reportcalc_cell(cell: ReportCalcCell, **config_options) -> ReportCalc
         line = convert_applicable_long_lines(line)
         line = format_lines(line, **config_options)
 
-        # print(line)
-
         if not line.latex:
             continue
 

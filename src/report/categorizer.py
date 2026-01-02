@@ -6,7 +6,7 @@ from typing import Union
 from handcalcs.handcalcs import (
     CalcCell,
     ParameterCell,
-    CalcLine,
+    LongCalcLine,
     ParameterLine,
     ConditionalLine,
     BlankLine,
@@ -21,7 +21,10 @@ from handcalcs.handcalcs import (
     add_result_values_to_line,
 )
 
-from report.types import ReportCalcLine, test_for_report_line
+from report.types import (
+    ReportCalcLine, test_for_report_line,
+    InputCalcLine, test_for_input_line, split_input_line,
+    )
 
 
 def categorize_lines(
@@ -29,7 +32,7 @@ def categorize_lines(
 ) -> Union[CalcCell, ParameterCell]:
     """
     Categorize each line in the cell into one of four types:
-    * CalcLine
+    * LongCalcLine
     * ParameterLine
     * ConditionalLine
     * ReportCalcLine
@@ -52,7 +55,7 @@ def categorize_lines(
 
 def categorize_line(
     line: str, calculated_results: dict, cell_override: str = ""
-) -> Union[CalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
+) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
     """
     Categorize a single line based on its content.
     
@@ -78,17 +81,46 @@ def categorize_line(
     except ValueError:
         comment = ""
 
+    # print (cell_override)
     # Report cell override behavior
+    if cell_override == "input":
+        # print('INPUT')
+        return _categorize_input_line(line, calculated_results, comment)
     if cell_override == "report":
+        # print('REPORT')
         return _categorize_report_line(line, calculated_results, comment)
     
     # Standard behavior (for future extension)
     return _categorize_standard_line(line, calculated_results, comment)
 
+def _categorize_input_line(
+    line: str, calculated_results: dict, comment: str
+) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
+    """Categorize a line within a report cell."""
+    if test_for_report_line(line):
+        return ReportCalcLine(line, comment, "")
+
+    if test_for_conditional_line(line):
+        return create_conditional_line(
+            line, calculated_results, "report", comment
+        )
+
+    if test_for_input_line(line):
+        return InputCalcLine(
+            split_input_line(line, calculated_results), comment, ""
+        )
+
+    if test_for_numeric_line(deque(list(expr_parser(line))[1:])):
+        return NumericCalcLine(expr_parser(line), comment, "")
+
+    if "=" in line:
+        return LongCalcLine(expr_parser(line), comment, "")
+
+    return ReportCalcLine(line, comment, "")
 
 def _categorize_report_line(
     line: str, calculated_results: dict, comment: str
-) -> Union[CalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
+) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
     """Categorize a line within a report cell."""
     if test_for_report_line(line):
         return ReportCalcLine(line, comment, "")
@@ -107,14 +139,39 @@ def _categorize_report_line(
         return NumericCalcLine(expr_parser(line), comment, "")
 
     if "=" in line:
-        return CalcLine(expr_parser(line), comment, "")
+        return LongCalcLine(expr_parser(line), comment, "")
 
     return ReportCalcLine(line, comment, "")
+
+# def _categorize_report_line(
+#     line: str, calculated_results: dict, comment: str
+# ) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
+#     """Categorize a line within a report cell."""
+#     if test_for_report_line(line):
+#         return ReportCalcLine(line, comment, "")
+
+#     if test_for_conditional_line(line):
+#         return create_conditional_line(
+#             line, calculated_results, "report", comment
+#         )
+
+#     if test_for_parameter_line(line):
+#         return ParameterLine(
+#             split_parameter_line(line, calculated_results), comment, ""
+#         )
+
+#     if test_for_numeric_line(deque(list(expr_parser(line))[1:])):
+#         return NumericCalcLine(expr_parser(line), comment, "")
+
+#     if "=" in line:
+#         return LongCalcLine(expr_parser(line), comment, "")
+
+#     return ReportCalcLine(line, comment, "")
 
 
 def _categorize_standard_line(
     line: str, calculated_results: dict, comment: str
-) -> Union[CalcLine, ParameterLine, ConditionalLine]:
+) -> Union[LongCalcLine, ParameterLine, ConditionalLine]:
     """Categorize a line using standard behavior."""
     if line == "\n" or line == "":
         return BlankLine(line, "", "")
@@ -133,7 +190,7 @@ def _categorize_standard_line(
         return NumericCalcLine(expr_parser(line), comment, "")
 
     if "=" in line:
-        return CalcLine(expr_parser(line), comment, "")
+        return LongCalcLine(expr_parser(line), comment, "")
 
     if len(expr_parser(line)) == 1:
         return ParameterLine(

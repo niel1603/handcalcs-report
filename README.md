@@ -67,7 +67,7 @@ The output is a clean, readable calculation report with headings, text, and alig
 
 ## How it works (briefly)
 
-Inside a `%%render_report` cell:
+Inside a `%%render report` cell:
 
 * `## 1. Title` → section header
 * `## 1.1 Subtitle` → subsection
