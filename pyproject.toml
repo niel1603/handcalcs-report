@@ -16,6 +16,7 @@ dependencies = [
     "innerscope >= 0.7.0",
     "pyparsing",
 ]
+
 [project.urls]
 Source = "https://github.com/niel1603/handcalcs-report"
 Upstream = "https://github.com/connorferster/handcalcs"
@@ -24,15 +25,12 @@ Upstream = "https://github.com/connorferster/handcalcs"
 exporters = ["nb-hideinputs"]
 doc = ["sphinx"]
 
-[tool.flit.module]
-name = "handcalcs"
-
 [tool.coverage.paths]
-source = ["handcalcs", "*/site-packages"]
+source = ["handcalcs_report", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["handcalcs"]
+source = ["handcalcs_report"]
 
 [tool.coverage.report]
 show_missing = true
