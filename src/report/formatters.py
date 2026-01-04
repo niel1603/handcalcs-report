@@ -51,12 +51,12 @@ def format_input_cell(cell: InputCalcCell, **config_options) -> InputCalcCell:
 
     def flush_math(single_math_line: str):
         blocks.append(
-            "$\n"
-            + "\\hspace{2em}"
+              "$$\n"
+              "\\hspace{2em}"
             + "\\begin{aligned}\n"
             + single_math_line
             + "\n\\end{aligned}\n"
-            + "$"
+            + "$$"
         )
 
     for line in cell.lines:
@@ -107,7 +107,8 @@ def format_reportcalc_cell(cell: ReportCalcCell, **config_options) -> ReportCalc
         if not pending_math:
             return
         blocks.append(
-            "$$\n"
+              "$$\n"
+              "\\hspace{2em}"
             + "\\begin{aligned}\n"
             + "\n".join(pending_math)
             + "\\end{aligned}\n"
