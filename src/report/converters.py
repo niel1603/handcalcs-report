@@ -8,6 +8,8 @@ from handcalcs.handcalcs import (
     add_result_values_to_line,
     convert_applicable_long_lines,
     round_and_render_line_objects_to_latex,
+    swap_symbolic_calcs,
+    toggle_scientific_notation, render_latex_str, swap_dec_sep
 )
 
 from report.types import (
@@ -30,7 +32,7 @@ def create_report_cell(
         precision=cell_precision,
         scientific_notation=cell_notation,
         lines=deque([]),
-        latex_code="",
+        markdown="",
     )
     return cell
 
@@ -50,7 +52,7 @@ def create_input_cell(
         precision=cell_precision,
         scientific_notation=cell_notation,
         lines=deque([]),
-        latex_code="",
+        markdown="",
     )
     return cell
 
@@ -83,10 +85,8 @@ def convert_inputcalc_cell(cell: InputCalcCell, **config_options) -> InputCalcCe
     outgoing = cell.lines
     calculated_results = cell.calculated_results
     incoming = deque([])
-    
     for line in outgoing:
         incoming.append(convert_line(line, calculated_results, **config_options))
-    
     cell.lines = incoming
     return cell
 
@@ -98,6 +98,7 @@ def convert_report(line, calculated_results, **config_options):
 @convert_line.register(InputCalcLine)
 def conver_input(line, calculated_results, **config_options):
     """Convert a input line (no-op for input lines)."""
+    line.line = swap_symbolic_calcs(line.line, calculated_results, **config_options)
     return line
 
 @convert_applicable_long_lines.register(ReportCalcLine)
@@ -122,4 +123,16 @@ def round_and_render_input(
     line, cell_precision: int, cell_notation: bool, **config_options
 ):
     """Round and render input lines (no-op for input lines)."""
+    idx_line = line.line
+    precision = cell_precision
+    use_scientific_notation = toggle_scientific_notation(
+        config_options["use_scientific_notation"], cell_notation
+    )
+    preferred_formatter = config_options["preferred_string_formatter"]
+    rendered_line = render_latex_str(
+        idx_line, use_scientific_notation, precision, preferred_formatter
+    )
+    rendered_line = swap_dec_sep(rendered_line, config_options["decimal_separator"])
+    line.line = rendered_line
+    line.latex = " ".join(rendered_line)
     return line

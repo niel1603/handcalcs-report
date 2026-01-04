@@ -103,8 +103,10 @@ def render(line, cell):
     # Retrieve updated variables (after .run_cell(cell))
     user_ns_postrun = ip.user_ns
 
-    # 🔽 SAFE branching (selection only)
-    if line_args.get("override") == "input" or "report":
+    # SAFE branching (selection only)
+    override = line_args.get("override")
+
+    if override in ("input", "report"):
         renderer = ReportRenderer(cell, user_ns_postrun, line_args)
         markdown = renderer.render()
         display(Markdown(markdown))
@@ -137,7 +139,8 @@ def tex(line, cell):
     # Retrieve updated variables (after .run_cell(cell))
     user_ns_postrun = ip.user_ns
 
-    if line_args.get("override") == "input" or "report":
+    override = line_args.get("override")
+    if override in ("input", "report"):
         renderer = ReportRenderer(cell, user_ns_postrun, line_args)
         markdown = renderer.render()
         print(markdown)

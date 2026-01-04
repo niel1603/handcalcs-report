@@ -14,7 +14,6 @@ class ReportCalcLine:
     comment: str
     latex: str
 
-
 @dataclass
 class ReportCalcCell:
     """
@@ -26,14 +25,11 @@ class ReportCalcCell:
     lines: deque
     precision: Optional[int]
     scientific_notation: Optional[bool]
-    latex_code: str
     markdown: Optional[str] = None
-
 
 def test_for_report_line(source: str) -> bool:
     """Returns True if 'source' appears to be a header line."""
     return source.startswith("##")
-
 
 @dataclass
 class InputCalcLine:
@@ -42,7 +38,6 @@ class InputCalcLine:
     comment: str
     latex: str
 
-
 @dataclass
 class InputCalcCell:
     source: str
@@ -50,8 +45,7 @@ class InputCalcCell:
     lines: deque
     precision: Optional[int]
     scientific_notation: Optional[bool]
-    # cols: int
-    latex_code: str
+    markdown: Optional[str] = None
 
 def test_for_input_line(line: str) -> bool:
     """

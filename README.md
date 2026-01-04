@@ -113,7 +113,7 @@ Load and Resistance Factor Design, LRFD
 
 $
 \hspace{2em}\begin{aligned}
-\phi &= 0.75 \; 
+\phi &= 0.75 \;
 \end{aligned}
 $
 
@@ -121,7 +121,7 @@ The angle between the line of action of the required force and the weld longitud
 
 $
 \hspace{2em}\begin{aligned}
-\theta &= 0.00 \; 
+\theta &= 0.00 \;
 \end{aligned}
 $
 
@@ -129,7 +129,7 @@ Fillet weld leg size
 
 $
 \hspace{2em}\begin{aligned}
-\mathrm{Ls} &= 8.00\ \mathrm{mm} \; 
+\mathrm{Ls} &= 8.00\ \mathrm{mm} \;
 \end{aligned}
 $
 
@@ -145,7 +145,7 @@ Filler metal classification strength, E60 → 410 MPa, E70 → 490 MPa
 
 $
 \hspace{2em}\begin{aligned}
-F_{EXX} &= 490.00\ \mathrm{MPa} \; 
+F_{EXX} &= 490.00\ \mathrm{MPa} \;
 \end{aligned}
 $
 
@@ -153,7 +153,7 @@ Number of weld side
 
 $
 \hspace{2em}\begin{aligned}
-N_{side} &= 2 \; 
+N_{side} &= 2 \;
 \end{aligned}
 $
 ```
@@ -210,6 +210,19 @@ $$
 \phi R_{n} &= \phi \cdot F_{nw} \cdot A_{we} \cdot k_{ds} \\&= 0.75 \cdot 294.00\ \mathrm{MPa} \cdot 848.40\ \mathrm{mm}^{2} \cdot 1.00 \\&= 187.07\ \mathrm{kN}  \\[10pt]
 \end{aligned}
 $$
+```
+
+## Exporter 
+
+To enable noinput exporters don't install using `pip install "handcalcs[exporters]"` it will replace handcalcs-report with handcalcs.
+
+instead install `hide_code` extension
+
+```bat
+pip install hide_code
+jupyter nbextension install --py hide_code
+jupyter nbextension enable --py hide_code
+jupyter serverextension enable --py hide_code
 ```
 
 ## Status

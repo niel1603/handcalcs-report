@@ -28,7 +28,7 @@ from report.types import (
 
 
 def categorize_lines(
-    cell: Union[CalcCell, ParameterCell],
+    cell: Union[CalcCell, ParameterCell], cell_override: str = ""
 ) -> Union[CalcCell, ParameterCell]:
     """
     Categorize each line in the cell into one of four types:
@@ -40,7 +40,6 @@ def categorize_lines(
     incoming = cell.source.rstrip().split("\n")
     outgoing = deque([])
     calculated_results = cell.calculated_results
-    cell_override = "report"
     
     for line in incoming:
         categorized = categorize_line(line, calculated_results, cell_override)
@@ -90,81 +89,44 @@ def categorize_line(
     # Standard behavior (for future extension)
     return _categorize_standard_line(line, calculated_results, comment)
 
+
 def _categorize_input_line(
     line: str, calculated_results: dict, comment: str
-) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
+) -> Union[ConditionalLine, InputCalcLine]:
     """Categorize a line within a report cell."""
-    if test_for_report_line(line):
-        return ReportCalcLine(line, comment, "")
-
     if test_for_conditional_line(line):
         return create_conditional_line(
-            line, calculated_results, "report", comment
+            line, calculated_results, "input", comment
         )
-
-    if test_for_input_line(line):
-        return InputCalcLine(
-            split_input_line(line, calculated_results), comment, ""
-        )
-
-    if test_for_numeric_line(deque(list(expr_parser(line))[1:])):
-        return NumericCalcLine(expr_parser(line), comment, "")
-
-    if "=" in line:
-        return LongCalcLine(expr_parser(line), comment, "")
-
-    return ReportCalcLine(line, comment, "")
+    return InputCalcLine(
+        split_parameter_line(line, calculated_results), comment, "")
 
 def _categorize_report_line(
     line: str, calculated_results: dict, comment: str
 ) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
     """Categorize a line within a report cell."""
-    if test_for_report_line(line):
-        return ReportCalcLine(line, comment, "")
-
-    if test_for_conditional_line(line):
-        return create_conditional_line(
-            line, calculated_results, "report", comment
-        )
-
-    if test_for_parameter_line(line):
-        return ParameterLine(
+    if test_for_parameter_line(line):  # A parameter can exist in a long cell, too
+        categorized_line = ParameterLine(
             split_parameter_line(line, calculated_results), comment, ""
         )
+    elif test_for_conditional_line(
+        line
+    ):  # A conditional line can exist in a long cell, too
+        categorized_line = create_conditional_line(
+            line, calculated_results, "report", comment
+        )
+    elif test_for_numeric_line(
+        deque(
+            list(expr_parser(line))[1:]
+        )  # Leave off the declared variable, e.g. _x_ = ...
+    ):
+        categorized_line = NumericCalcLine(expr_parser(line), comment, "")
 
-    if test_for_numeric_line(deque(list(expr_parser(line))[1:])):
-        return NumericCalcLine(expr_parser(line), comment, "")
-
-    if "=" in line:
-        return LongCalcLine(expr_parser(line), comment, "")
-
-    return ReportCalcLine(line, comment, "")
-
-# def _categorize_report_line(
-#     line: str, calculated_results: dict, comment: str
-# ) -> Union[LongCalcLine, ParameterLine, ConditionalLine, ReportCalcLine]:
-#     """Categorize a line within a report cell."""
-#     if test_for_report_line(line):
-#         return ReportCalcLine(line, comment, "")
-
-#     if test_for_conditional_line(line):
-#         return create_conditional_line(
-#             line, calculated_results, "report", comment
-#         )
-
-#     if test_for_parameter_line(line):
-#         return ParameterLine(
-#             split_parameter_line(line, calculated_results), comment, ""
-#         )
-
-#     if test_for_numeric_line(deque(list(expr_parser(line))[1:])):
-#         return NumericCalcLine(expr_parser(line), comment, "")
-
-#     if "=" in line:
-#         return LongCalcLine(expr_parser(line), comment, "")
-
-#     return ReportCalcLine(line, comment, "")
-
+    else:
+        categorized_line = LongCalcLine(
+            expr_parser(line), comment, ""
+        )  # code_reader
+    return categorized_line
 
 def _categorize_standard_line(
     line: str, calculated_results: dict, comment: str

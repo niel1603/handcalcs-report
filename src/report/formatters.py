@@ -9,7 +9,7 @@ from handcalcs.handcalcs import (
     toggle_scientific_notation,
     round_and_render_line_objects_to_latex,
     convert_applicable_long_lines,
-    format_strings, itertools, BlankLine
+    format_strings, itertools, BlankLine, deque
 )
 
 from report.types import (
@@ -22,140 +22,100 @@ from report.converters import create_report_cell, create_input_cell, convert_cel
 @format_lines.register(InputCalcLine)
 def format_input_line(line: InputCalcLine, **config_options) -> InputCalcLine:
     comment_space = "\\;"
-    line_break = "\n"
-    if "=" in line.latex:
-        replaced = line.latex.replace("=", "&=")
-        comment = format_strings(line.comment, comment=True)
-        line.latex = f"{replaced} {comment_space} {comment}{line_break}"
-    else:  # To handle sympy symbols displayed alone
-        replaced = line.latex.replace(" ", comment_space)
-        comment = format_strings(line.comment, comment=True)
-        line.latex = f"{replaced} {comment_space} {comment}{line_break}"
+
+    if isinstance(line.line, deque):
+        latex = " ".join(str(x) for x in line.line)
+    else:
+        latex = str(line.line)
+    if "=" in latex:
+        latex = latex.replace("=", "&=", 1)
+
+    comment = format_strings(line.comment, comment=True) if line.comment else ""
+
+    line.latex = f"{latex} {comment_space} {comment}".rstrip()
     return line
 
 @format_cell.register(InputCalcCell)
 def format_input_cell(cell: InputCalcCell, **config_options) -> InputCalcCell:
-    """Format a report cell as Markdown with embedded LaTeX math blocks."""
     precision = (
         config_options["display_precision"]
         if cell.precision is None
         else cell.precision
     )
-
     cell_notation = toggle_scientific_notation(
         config_options["use_scientific_notation"],
         cell.scientific_notation,
     )
 
-    blocks = []
-    pending_math = []
+    blocks: list[str] = []
 
-    def flush_math():
-        """Flush accumulated math lines into a single aligned block."""
-        if pending_math:
-            blocks.append(
-                  "$\n"
-                + "\hspace{2em}"
-                + "\\begin{aligned}\n"
-                + "\n".join(pending_math)
-                + "\\end{aligned}\n"
-                + "$"
-            )
-            pending_math.clear()
+    def flush_math(single_math_line: str):
+        blocks.append(
+            "$\n"
+            + "\\hspace{2em}"
+            + "\\begin{aligned}\n"
+            + single_math_line
+            + "\n\\end{aligned}\n"
+            + "$"
+        )
 
     for line in cell.lines:
-        # Process line through formatting pipeline
         line = round_and_render_line_objects_to_latex(
             line, precision, cell_notation, **config_options
         )
-        line = convert_applicable_long_lines(line)
         line = format_lines(line, **config_options)
 
         if not line.latex:
             continue
 
-        # Handle report lines differently from math lines
         if isinstance(line, ReportCalcLine):
-            flush_math()
-            text = line.line.lstrip("#").strip()
-            
-            if re.match(r"^\d+\.\d+", text):
-                blocks.append(f"### {text}")
-            elif re.match(r"^\d+\.", text):
-                blocks.append(f"## {text}")
-            else:
-                blocks.append(text)
+            blocks.append(line.latex)
         else:
-            # Accumulate math lines
-            pending_math.append(line.latex)
-
-    flush_math()
+            flush_math(line.latex)
 
     cell.markdown = "\n\n".join(blocks)
-    cell.latex_code = ""  # Unused in report mode
     return cell
 
 @format_lines.register(ReportCalcLine)
 def format_reportcalc_line(line: ReportCalcLine, **config_options) -> ReportCalcLine:
-    """Format a report calculation line as LaTeX."""
-    raw = line.line.rstrip()
-    text = raw.lstrip("#").strip()
-
-    # Determine semantic level based on numbering
+    """Format a report calculation line as Markdown."""
+    text = line.line.lstrip("#").strip()
     if re.match(r"^\d+\.\d+", text):
-        # Subheader (e.g., "1.1")
-        indent_em = 2
-        size = r"\large "
-        line_break = f"{config_options['line_break']}\n"
+        line.latex = f"### {text}"
     elif re.match(r"^\d+\.", text):
-        # Header (e.g., "1.")
-        indent_em = 0
-        size = r"\Large "
-        line_break = f"{config_options['line_break']}\n"
+        line.latex = f"## {text}"
     else:
-        # Description paragraph
-        indent_em = 4
-        size = r"\small "
-        line_break = "\\\\"
-
-    # Generate LaTeX
-    line.latex = (
-        rf"\hspace{{{indent_em}em}}\text{{\textbf{{{size}{text}}}}}{line_break}"
-    )
+        line.latex = text
     return line
-
 
 @format_cell.register(ReportCalcCell)
 def format_reportcalc_cell(cell: ReportCalcCell, **config_options) -> ReportCalcCell:
-    """Format a report cell as Markdown with embedded LaTeX math blocks."""
     precision = (
         config_options["display_precision"]
         if cell.precision is None
         else cell.precision
     )
-
     cell_notation = toggle_scientific_notation(
         config_options["use_scientific_notation"],
         cell.scientific_notation,
     )
 
-    blocks = []
-    pending_math = []
+    blocks: list[str] = []
+    pending_math: list[str] = []
 
     def flush_math():
-        """Flush accumulated math lines into a single aligned block."""
-        if pending_math:
-            blocks.append(
-                "$$\n"
-                + "\\begin{aligned}\n"
-                + "\n".join(pending_math)
-                + "\\end{aligned}\n"
-                + "$$"
-            )
-            pending_math.clear()
+        if not pending_math:
+            return
+        blocks.append(
+            "$$\n"
+            + "\\begin{aligned}\n"
+            + "\n".join(pending_math)
+            + "\\end{aligned}\n"
+            + "$$"
+        )
+        pending_math.clear()
 
     for line in cell.lines:
-        # Process line through formatting pipeline
         line = round_and_render_line_objects_to_latex(
             line, precision, cell_notation, **config_options
         )
@@ -165,25 +125,17 @@ def format_reportcalc_cell(cell: ReportCalcCell, **config_options) -> ReportCalc
         if not line.latex:
             continue
 
-        # Handle report lines differently from math lines
         if isinstance(line, ReportCalcLine):
+            # Text always breaks math
             flush_math()
-            text = line.line.lstrip("#").strip()
-            
-            if re.match(r"^\d+\.\d+", text):
-                blocks.append(f"### {text}")
-            elif re.match(r"^\d+\.", text):
-                blocks.append(f"## {text}")
-            else:
-                blocks.append(text)
-        else:
-            # Accumulate math lines
-            pending_math.append(line.latex)
+            blocks.append(line.latex)
+            continue
+
+        flush_math()
+        pending_math.append(line.latex)
 
     flush_math()
-
     cell.markdown = "\n\n".join(blocks)
-    cell.latex_code = ""  # Unused in report mode
     return cell
 
 
@@ -216,7 +168,7 @@ def latex_report(
             cell_notation=cell_notation,
         )
     # Categorize lines
-    cell = categorize_lines(cell)
+    cell = categorize_lines(cell, override_commands)
 
     # Convert cell
     cell = convert_cell(cell, **config_options)
